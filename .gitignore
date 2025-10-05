@@ -1,0 +1,25 @@
+# Python
+venv/
+*.pyc
+__pycache__/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Environment variables
+.env
+.env.*
+
+# Database
+*.sqlite3
+
+# Logs
+*.log
+
+# IDEs (optional)
+.vscode/
+.idea/

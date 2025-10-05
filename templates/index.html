@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Nilai Matematika</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #ddd6fe;
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+        .page-title {
+            color: #7c3aed;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .prediction-card {
+            background: #8b5cf6;
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+        .metric-card {
+            background: #ede9fe;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 2px solid #8b5cf6;
+            box-shadow: 0 3px 10px rgba(139, 92, 246, 0.2);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #7c3aed;
+        }
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .form-card {
+            background: #f5f3ff;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #c4b5fd;
+        }
+        .btn-predict {
+            background: #8b5cf6;
+            border: none;
+            padding: 12px 40px;
+            font-weight: bold;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5);
+            background: #7c3aed;
+        }
+        .graph-section {
+            margin-top: 40px;
+        }
+        .graph-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.15);
+            transition: all 0.3s ease;
+            border: 1px solid #ede9fe;
+        }
+        .graph-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(139, 92, 246, 0.25);
+            border-color: #8b5cf6;
+        }
+        .graph-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        .graph-title {
+            color: #7c3aed;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .error-alert {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <h1 class="page-title">📚 Prediksi Nilai Matematika Berdasarkan Jam Belajar</h1>
+            
+            <!-- Form Input -->
+            <div class="form-card">
+                <h4 class="text-center mb-4">Masukkan Data Belajar</h4>
+                <form method="POST" action="/">
+                    <div class="mb-3">
+                        <label for="study_hours" class="form-label">Jam Belajar Per Minggu (hours)</label>
+                        <input type="number" step="0.01" class="form-control form-control-lg" 
+                               id="study_hours" name="study_hours" placeholder="Contoh: 25" 
+                               value="{{ study_hours or '' }}" required>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-predict">
+                            🔍 Prediksi Nilai Matematika
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Error Message -->
+            {% if error %}
+            <div class="error-alert">
+                <strong>⚠️ Error:</strong> {{ error }}
+            </div>
+            {% endif %}
+
+            <!-- Hasil Prediksi -->
+            {% if prediction is not none %}
+            <div class="prediction-card">
+                <h3 class="text-center mb-3">📊 Hasil Prediksi</h3>
+                <div class="text-center">
+                    <p class="mb-2">Jam Belajar: <strong>{{ study_hours }} jam/minggu</strong></p>
+                    <h2 class="display-4 mb-0">
+                        {% if prediction is string %}
+                            {{ prediction }}
+                        {% else %}
+                            {{ '%.2f'|format(prediction) }}
+                        {% endif %}
+                    </h2>
+                    <p class="mt-2">Prediksi Nilai Matematika</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Metrik Model -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <div class="metric-value">{{ '%.4f'|format(r2) }}</div>
+                        <div class="metric-label">R² Score</div>
+                        <small class="text-muted">Akurasi Model</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <div class="metric-value">{{ '%.4f'|format(rmse) }}</div>
+                        <div class="metric-label">RMSE</div>
+                        <small class="text-muted">Root Mean Square Error</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning jika model belum loaded -->
+            {% if not model_loaded %}
+            <div class="alert alert-warning mt-3" role="alert">
+                <strong>⚠️ Perhatian:</strong> Model belum dimuat. Jalankan notebook pelatihan (<code>notebooks/ta2.ipynb</code>) untuk membuat <code>models/model.pkl</code>.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Grafik Visualisasi -->
+        <div class="graph-section">
+            <h2 class="text-center text-white mb-4">📈 Visualisasi Data & Model</h2>
+            
+            <div class="row">
+                <!-- Grafik Regresi -->
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <div class="graph-card">
+                        <h5 class="graph-title">Grafik Regresi Linear</h5>
+                        <img src="{{ url_for('static', filename='ta2_regression.png') }}" alt="Grafik Regresi">
+                        <p class="text-center text-muted mt-2 mb-0 small">Hubungan antara jam belajar dan nilai matematika</p>
+                    </div>
+                </div>
+
+                <!-- Scatter Plot -->
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <div class="graph-card">
+                        <h5 class="graph-title">Scatter Plot</h5>
+                        <img src="{{ url_for('static', filename='ta2_scatter.png') }}" alt="Scatter Plot">
+                        <p class="text-center text-muted mt-2 mb-0 small">Sebaran data jam belajar vs nilai</p>
+                    </div>
+                </div>
+
+                <!-- Residual Plot -->
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <div class="graph-card">
+                        <h5 class="graph-title">Residual Plot</h5>
+                        <img src="{{ url_for('static', filename='ta2_residual.png') }}" alt="Residual Plot">
+                        <p class="text-center text-muted mt-2 mb-0 small">Analisis residual model</p>
+                    </div>
+                </div>
+
+                <!-- Heatmap Korelasi -->
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <div class="graph-card">
+                        <h5 class="graph-title">Heatmap Korelasi</h5>
+                        <img src="{{ url_for('static', filename='ta2_heatmap.png') }}" alt="Heatmap Korelasi">
+                        <p class="text-center text-muted mt-2 mb-0 small">Korelasi antar variabel dalam dataset</p>
+                    </div>
+                </div>
+
+                <!-- Distribusi Jam Belajar -->
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <div class="graph-card">
+                        <h5 class="graph-title">Distribusi Jam Belajar</h5>
+                        <img src="{{ url_for('static', filename='ta2_histogram_x.png') }}" alt="Distribusi Jam Belajar">
+                        <p class="text-center text-muted mt-2 mb-0 small">Histogram jam belajar per minggu</p>
+                    </div>
+                </div>
+
+                <!-- Distribusi Nilai Matematika -->
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <div class="graph-card">
+                        <h5 class="graph-title">Distribusi Nilai Matematika</h5>
+                        <img src="{{ url_for('static', filename='ta2_histogram_y.png') }}" alt="Distribusi Nilai">
+                        <p class="text-center text-muted mt-2 mb-0 small">Histogram nilai matematika siswa</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
